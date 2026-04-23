@@ -27,11 +27,11 @@
 
 ## 📸 效果对比
 
-> 原作：[【スパコミ新刊】アクルビハピエンIFルート本](https://www.pixiv.net/artworks/143780297)
+> 原作：[私の魔法の先生は魔法が使えない（続）その62](https://www.pixiv.net/artworks/143799767)
 
 | 原图 | 译图 |
 |:---:|:---:|
-| ![原图](docs/images/demo_original.jpg) | ![译图](docs/images/demo_translated.jpg) |
+| ![原图](docs/images/demo_original.png) | ![译图](docs/images/demo_translated.png) |
 
 <!-- 
 使用方法：
