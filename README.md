@@ -27,7 +27,7 @@
 
 ## 📸 效果对比
 
-> 原作：[作品标题](https://www.pixiv.net/artworks/xxxxxxxx) by 作者名
+> 原作：[【スパコミ新刊】アクルビハピエンIFルート本](https://www.pixiv.net/artworks/143780297)
 
 | 原图 | 译图 |
 |:---:|:---:|
