@@ -73,7 +73,7 @@ pnpm run pack
 
 ## Tech Stack
 
-<div align="center">
+<div>
 
 | 层级 | 技术 |
 |:---:|---|
