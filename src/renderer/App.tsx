@@ -4,6 +4,7 @@ import TabBar from './components/TabBar'
 import Bookshelf from './components/Bookshelf'
 import Settings from './components/Settings'
 import Workspace from './components/Workspace'
+import Toast from './components/Toast'
 import type { Project } from './types'
 
 interface WorkspaceTab {
@@ -16,7 +17,7 @@ interface WorkspaceTab {
 function App(): React.ReactElement {
   const [activeTab, setActiveTab] = useState('bookshelf')
   const [workspaceTabs, setWorkspaceTabs] = useState<WorkspaceTab[]>([])
-
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const openProject = useCallback((project: Project) => {
     const existing = workspaceTabs.find(t => t.projectId === project.id)
     if (existing) {
@@ -49,7 +50,7 @@ function App(): React.ReactElement {
   const activeWorkspace = workspaceTabs.find(t => t.id === activeTab)
 
   return (
-    <div data-theme="light" className="h-screen flex flex-col">
+    <div data-theme={theme} className="h-screen flex flex-col">
       <TitleBar />
       <TabBar tabs={tabs} activeId={activeTab} onSelect={setActiveTab} onClose={closeTab} />
       <div className="flex-1 overflow-hidden">
@@ -57,6 +58,7 @@ function App(): React.ReactElement {
         {activeTab === 'settings' && <Settings />}
         {activeWorkspace && <Workspace projectId={activeWorkspace.projectId} />}
       </div>
+      <Toast />
     </div>
   )
 }
