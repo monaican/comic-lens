@@ -124,6 +124,15 @@ export function registerIpcHandlers(): void {
 
   // Window controls
   ipcMain.handle('app:version', () => app.getVersion())
+  ipcMain.handle('app:open-external', (_, url: string) => shell.openExternal(url))
+  ipcMain.handle('app:check-update', async () => {
+    const resp = await fetch('https://api.github.com/repos/monaican/comic-lens/releases/latest', {
+      signal: AbortSignal.timeout(10000)
+    })
+    if (!resp.ok) throw new Error(`GitHub API ${resp.status}`)
+    const data = await resp.json() as { tag_name: string; html_url: string }
+    return { tag: data.tag_name, url: data.html_url }
+  })
   ipcMain.on('window:minimize', (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize()
   })

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Info } from 'lucide-react'
+import { Info, Github, RefreshCw } from 'lucide-react'
+
+const REPO_URL = 'https://github.com/monaican/comic-lens'
 
 interface Props {
   open: boolean
@@ -8,10 +10,28 @@ interface Props {
 
 export default function AboutModal({ open, onClose }: Props) {
   const [version, setVersion] = useState('')
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'available' | 'error'>('idle')
+  const [latestRelease, setLatestRelease] = useState<{ tag: string; url: string } | null>(null)
 
   useEffect(() => {
-    if (open) window.api.app.getVersion().then(setVersion)
+    if (open) {
+      window.api.app.getVersion().then(setVersion)
+      setUpdateStatus('idle')
+      setLatestRelease(null)
+    }
   }, [open])
+
+  const checkUpdate = async () => {
+    setUpdateStatus('checking')
+    try {
+      const release = await window.api.app.checkUpdate()
+      setLatestRelease(release)
+      const latest = release.tag.replace(/^v/, '')
+      setUpdateStatus(latest === version ? 'latest' : 'available')
+    } catch {
+      setUpdateStatus('error')
+    }
+  }
 
   return (
     <dialog className={`modal ${open ? 'modal-open' : ''}`}>
@@ -26,6 +46,35 @@ export default function AboutModal({ open, onClose }: Props) {
             AI 驱动的漫画翻译工具。通过视觉识别、智能翻译和图片生成，一键完成漫画本地化。
           </p>
         </div>
+
+        <div className="flex justify-center gap-2 pb-3">
+          <button className="btn btn-sm btn-outline gap-1" onClick={() => window.api.app.openExternal(REPO_URL)}>
+            <Github className="w-3.5 h-3.5" /> GitHub
+          </button>
+          <button
+            className="btn btn-sm btn-outline gap-1"
+            onClick={checkUpdate}
+            disabled={updateStatus === 'checking'}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${updateStatus === 'checking' ? 'animate-spin' : ''}`} />
+            检查更新
+          </button>
+        </div>
+
+        {updateStatus === 'latest' && (
+          <p className="text-xs text-success pb-2">已是最新版本</p>
+        )}
+        {updateStatus === 'available' && latestRelease && (
+          <div className="pb-2">
+            <p className="text-xs text-warning">发现新版本: {latestRelease.tag}</p>
+            <button className="btn btn-xs btn-link" onClick={() => window.api.app.openExternal(latestRelease.url)}>
+              前往下载
+            </button>
+          </div>
+        )}
+        {updateStatus === 'error' && (
+          <p className="text-xs text-error pb-2">检查更新失败，请稍后重试</p>
+        )}
 
         <div className="divider text-xs text-base-content/40 my-1">技术栈</div>
         <div className="flex flex-wrap justify-center gap-1.5 pb-4">

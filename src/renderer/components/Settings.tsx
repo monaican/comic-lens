@@ -71,13 +71,7 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
 
   useEffect(() => {
     if (!config) return
-    setDraft({
-      ...config,
-      image_gen: {
-        ...config.image_gen,
-        provider: 'openai'
-      }
-    })
+    setDraft({ ...config })
   }, [config])
 
   if (!draft) return <div className="flex items-center justify-center h-full"><span className="loading loading-spinner loading-lg text-primary" /></div>
@@ -116,7 +110,10 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
             <ModelConfigCard label="推理模型" value={draft.reasoning_model}
               onChange={v => setDraft({ ...draft, reasoning_model: v })} />
             <ModelConfigCard label="图片生成模型" value={draft.image_gen}
-              providerOptions={[{ value: 'openai', label: 'OpenAI Responses' }]}
+              providerOptions={[
+                { value: 'openai', label: 'OpenAI Responses' },
+                { value: 'openai-images', label: 'OpenAI Images' }
+              ]}
               onChange={v => setDraft({ ...draft, image_gen: v })} />
           </div>
 

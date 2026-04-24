@@ -79,7 +79,9 @@ const api = {
     }
   },
   app: {
-    getVersion: () => ipcRenderer.invoke('app:version')
+    getVersion: () => ipcRenderer.invoke('app:version'),
+    openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
+    checkUpdate: () => ipcRenderer.invoke('app:check-update') as Promise<{ tag: string; url: string }>
   },
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),

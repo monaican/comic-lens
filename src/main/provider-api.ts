@@ -1,3 +1,45 @@
+export function buildImagesEditsEndpoint(baseUrl: string): string {
+  const normalized = baseUrl.trim().replace(/\/+$/, '')
+  if (!normalized) throw new Error('BASE_URL 为空')
+  if (normalized.endsWith('/v1/images/edits')) return normalized
+  if (normalized.endsWith('/v1')) return `${normalized}/images/edits`
+  return `${normalized}/v1/images/edits`
+}
+
+export async function sendImageEditsRequest(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  prompt: string,
+  imageBuffer: Buffer,
+  signal?: AbortSignal
+): Promise<string> {
+  const endpoint = buildImagesEditsEndpoint(baseUrl)
+  const requestSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(600000)])
+    : AbortSignal.timeout(600000)
+
+  const formData = new FormData()
+  formData.append('model', model)
+  formData.append('prompt', prompt)
+  formData.append('image', new Blob([imageBuffer], { type: 'image/png' }), 'image.png')
+  formData.append('response_format', 'b64_json')
+
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey.trim()}` },
+    body: formData,
+    signal: requestSignal
+  })
+  if (!resp.ok) {
+    const detail = await resp.text()
+    throw new Error(`请求失败，HTTP ${resp.status}: ${detail}`)
+  }
+  const json = await resp.json() as { data: Array<{ b64_json: string }> }
+  if (!json.data?.[0]?.b64_json) throw new Error('Images Edits 响应缺少图片数据')
+  return json.data[0].b64_json
+}
+
 export function buildResponsesEndpoint(baseUrl: string): string {
   const normalized = baseUrl.trim().replace(/\/+$/, '')
   if (!normalized) throw new Error('BASE_URL 为空')
