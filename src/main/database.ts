@@ -55,26 +55,34 @@ export function initDatabase(): void {
 
   const projectCols = db.prepare("PRAGMA table_info(projects)").all() as { name: string }[]
   const projectColNames = new Set(projectCols.map(c => c.name))
-  if (!projectColNames.has('translate_mode')) {
-    db.exec("ALTER TABLE projects ADD COLUMN translate_mode TEXT DEFAULT 'auto'")
-  }
-  if (!projectColNames.has('current_phase')) {
-    db.exec("ALTER TABLE projects ADD COLUMN current_phase TEXT DEFAULT ''")
-  }
-  if (!projectColNames.has('phase_confirmed')) {
-    db.exec("ALTER TABLE projects ADD COLUMN phase_confirmed INTEGER DEFAULT 0")
+  const projectMigrations: [string, string][] = [
+    ['master_prompt', "TEXT DEFAULT ''"],
+    ['status', "TEXT DEFAULT 'idle'"],
+    ['translate_mode', "TEXT DEFAULT 'auto'"],
+    ['current_phase', "TEXT DEFAULT ''"],
+    ['phase_confirmed', "INTEGER DEFAULT 0"],
+  ]
+  for (const [col, def] of projectMigrations) {
+    if (!projectColNames.has(col)) {
+      db.exec(`ALTER TABLE projects ADD COLUMN ${col} ${def}`)
+    }
   }
 
   const pageCols = db.prepare("PRAGMA table_info(pages)").all() as { name: string }[]
   const pageColNames = new Set(pageCols.map(c => c.name))
-  if (!pageColNames.has('error_message')) {
-    db.exec("ALTER TABLE pages ADD COLUMN error_message TEXT DEFAULT ''")
-  }
-  if (!pageColNames.has('retry_count')) {
-    db.exec("ALTER TABLE pages ADD COLUMN retry_count INTEGER DEFAULT 0")
-  }
-  if (!pageColNames.has('edited')) {
-    db.exec("ALTER TABLE pages ADD COLUMN edited INTEGER DEFAULT 0")
+  const pageMigrations: [string, string][] = [
+    ['summary', "TEXT DEFAULT ''"],
+    ['vision_result', "TEXT DEFAULT ''"],
+    ['refined_translation', "TEXT DEFAULT ''"],
+    ['final_prompt', "TEXT DEFAULT ''"],
+    ['error_message', "TEXT DEFAULT ''"],
+    ['retry_count', "INTEGER DEFAULT 0"],
+    ['edited', "INTEGER DEFAULT 0"],
+  ]
+  for (const [col, def] of pageMigrations) {
+    if (!pageColNames.has(col)) {
+      db.exec(`ALTER TABLE pages ADD COLUMN ${col} ${def}`)
+    }
   }
 }
 
