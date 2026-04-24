@@ -1,3 +1,4 @@
+import { ScrollText } from 'lucide-react'
 import type { Phase, PhaseProgress, TranslateMode } from '../types'
 
 const phaseLabels: Record<Phase, string> = {
@@ -24,6 +25,8 @@ interface Props {
   onStart: () => void
   onStop: () => void
   onRetryFailed: () => void
+  logCount: number
+  onShowLog: () => void
 }
 
 function formatTime(ms: number): string {
@@ -36,7 +39,7 @@ function formatTime(ms: number): string {
 export default function WorkspaceToolbar({
   projectName, sourceLang, targetLang, translateMode, onModeChange,
   currentPhase, phaseProgress, isRunning, completedCount, totalCount, elapsedMs,
-  onStart, onStop, onRetryFailed
+  onStart, onStop, onRetryFailed, logCount, onShowLog
 }: Props) {
   const progressPct = phaseProgress && phaseProgress.total > 0
     ? Math.round((phaseProgress.completed / phaseProgress.total) * 100)
@@ -91,6 +94,10 @@ export default function WorkspaceToolbar({
         </div>
 
         <div className="flex items-center gap-2">
+          <button className="btn btn-ghost btn-xs gap-1" onClick={onShowLog}>
+            <ScrollText className="w-3.5 h-3.5" />
+            {logCount > 0 && <span className="text-xs text-base-content/50">{logCount}</span>}
+          </button>
           {!isRunning ? (
             <button className="btn btn-primary btn-xs" onClick={onStart}>开始翻译</button>
           ) : (

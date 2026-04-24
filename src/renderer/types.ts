@@ -75,6 +75,12 @@ export interface PhaseCompleted {
   nextPhase: Phase | null
 }
 
+export interface LogEntry {
+  time: number
+  level: 'info' | 'warn' | 'error'
+  message: string
+}
+
 declare global {
   interface Window {
     api: {
@@ -120,6 +126,7 @@ declare global {
         onAllFinished: (cb: (data: { projectId: string }) => void) => void
         onPipelineError: (cb: (data: { projectId: string; error: string }) => void) => void
         onPhaseProgress: (cb: (data: PhaseProgress) => void) => void
+        onLog: (cb: (data: LogEntry) => void) => void
         removeAllListeners: () => void
       }
       window: {

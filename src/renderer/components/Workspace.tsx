@@ -7,6 +7,7 @@ import PhaseConfirmBar from './PhaseConfirmBar'
 import ThumbnailList from './ThumbnailList'
 import ImageViewer from './ImageViewer'
 import DetailPanel from './DetailPanel'
+import LogModal from './LogModal'
 import type { Project, TranslateMode } from '../types'
 
 interface Props { projectId: string }
@@ -18,6 +19,7 @@ export default function Workspace({ projectId }: Props) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const [showLog, setShowLog] = useState(false)
 
   useEffect(() => {
     window.api.projects.get(projectId).then(p => p && setProject(p))
@@ -62,6 +64,8 @@ export default function Workspace({ projectId }: Props) {
         onStart={translation.start}
         onStop={translation.stop}
         onRetryFailed={translation.retryFailed}
+        logCount={translation.logs.length}
+        onShowLog={() => setShowLog(true)}
       />
       <PhaseConfirmBar phaseCompleted={translation.phaseCompleted} onConfirm={translation.confirmPhase} />
 
@@ -103,6 +107,7 @@ export default function Workspace({ projectId }: Props) {
           </div>
         )}
       </div>
+      <LogModal open={showLog} onClose={() => setShowLog(false)} logs={translation.logs} />
     </div>
   )
 }

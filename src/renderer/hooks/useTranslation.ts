@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Phase, TranslateProgress, PhaseCompleted, PhaseProgress } from '../types'
+import type { Phase, TranslateProgress, PhaseCompleted, PhaseProgress, LogEntry } from '../types'
 
 interface TranslationState {
   isRunning: boolean
@@ -8,6 +8,7 @@ interface TranslationState {
   phaseProgress: PhaseProgress | null
   pageStatuses: Map<string, { phase: Phase; status: string }>
   errors: Map<string, string>
+  logs: LogEntry[]
   finished: boolean
   pipelineError: string | null
   elapsedMs: number
@@ -21,6 +22,7 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     phaseProgress: null,
     pageStatuses: new Map(),
     errors: new Map(),
+    logs: [],
     finished: false,
     pipelineError: null,
     elapsedMs: 0
@@ -84,6 +86,10 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
       setState(prev => ({ ...prev, phaseProgress: data }))
     }
 
+    const handleLog = (data: LogEntry) => {
+      setState(prev => ({ ...prev, logs: [...prev.logs, data] }))
+    }
+
     const handlePhaseCompleted = (data: PhaseCompleted) => {
       setState(prev => ({ ...prev, phaseCompleted: data }))
       onUpdate?.()
@@ -106,6 +112,7 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     window.api.translate.onPageError(handleError)
     window.api.translate.onPhaseStarted(handlePhaseStarted)
     window.api.translate.onPhaseProgress(handlePhaseProgress)
+    window.api.translate.onLog(handleLog)
     window.api.translate.onPhaseCompleted(handlePhaseCompleted)
     window.api.translate.onAllFinished(handleAllFinished)
     window.api.translate.onPipelineError(handlePipelineError)
@@ -122,7 +129,7 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
       ...prev,
       isRunning: true, finished: false, pipelineError: null,
       pageStatuses: new Map(), errors: new Map(), elapsedMs: 0,
-      phaseProgress: null
+      phaseProgress: null, logs: []
     }))
     startTimer()
     await window.api.translate.start(projectId)

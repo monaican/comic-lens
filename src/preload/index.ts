@@ -63,11 +63,15 @@ const api = {
     onPhaseProgress: (cb: (data: unknown) => void) => {
       ipcRenderer.on('translate:phase-progress', (_, data) => cb(data))
     },
+    onLog: (cb: (data: unknown) => void) => {
+      ipcRenderer.on('translate:log', (_, data) => cb(data))
+    },
     removeAllListeners: () => {
       const channels = [
         'translate:page-progress', 'translate:page-finished', 'translate:page-error',
         'translate:phase-started', 'translate:phase-completed',
-        'translate:all-finished', 'translate:pipeline-error', 'translate:phase-progress'
+        'translate:all-finished', 'translate:pipeline-error', 'translate:phase-progress',
+        'translate:log'
       ]
       channels.forEach(ch => ipcRenderer.removeAllListeners(ch))
     }
