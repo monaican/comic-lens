@@ -30,12 +30,13 @@ interface Props {
 
 export default function ThumbnailList({ pages, sourceDir, projectId, selectedId, onSelect, pageStatuses }: Props) {
   const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  const thumbsRef = useRef<Record<string, string>>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<Set<string>>(new Set())
 
   const loadThumb = useCallback(async (filename: string) => {
-    if (thumbs[filename] || loadingRef.current.has(filename)) return
+    if (thumbsRef.current[filename] || loadingRef.current.has(filename)) return
     loadingRef.current.add(filename)
     try {
       let src = await window.api.thumbnail.get(projectId, filename)
@@ -43,11 +44,18 @@ export default function ThumbnailList({ pages, sourceDir, projectId, selectedId,
         src = await window.api.thumbnail.generate(projectId, sourceDir, filename)
       }
       if (src) {
-        setThumbs(prev => ({ ...prev, [filename]: src! }))
+        thumbsRef.current = { ...thumbsRef.current, [filename]: src }
+        setThumbs(thumbsRef.current)
       }
     } catch { /* ignore */ }
     loadingRef.current.delete(filename)
-  }, [projectId, sourceDir, thumbs])
+  }, [projectId, sourceDir])
+
+  useEffect(() => {
+    thumbsRef.current = {}
+    setThumbs({})
+    loadingRef.current.clear()
+  }, [projectId])
 
   useEffect(() => {
     const onProgress = (data: { projectId: string; filename: string }) => {

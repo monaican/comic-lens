@@ -47,13 +47,13 @@ export default function DetailPanel({ page, masterPrompt, onSave, onRegenerate, 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3 min-w-0">
       <div className="collapse collapse-arrow bg-base-200">
         <input type="checkbox" />
         <div className="collapse-title text-sm font-medium">总控提示词</div>
         <div className="collapse-content">
           <textarea
-            className="textarea textarea-bordered w-full text-xs font-mono h-32"
+            className="textarea textarea-bordered w-full text-xs font-mono h-32 resize-y"
             value={editMaster}
             onChange={e => setEditMaster(e.target.value)}
           />
@@ -70,25 +70,25 @@ export default function DetailPanel({ page, masterPrompt, onSave, onRegenerate, 
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">{page.filename}</span>
-            <span className={`badge badge-sm ${statusBadge[page.status]?.class || ''}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-medium truncate flex-1 min-w-0">{page.filename}</span>
+            <span className={`badge badge-sm flex-shrink-0 ${statusBadge[page.status]?.class || ''}`}>
               {statusBadge[page.status]?.label || page.status}
             </span>
           </div>
 
           {page.error_message && (
             <div className="alert alert-error text-xs py-2">
-              <span>{page.error_message}</span>
+              <span className="break-all">{page.error_message}</span>
             </div>
           )}
 
           <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" defaultChecked />
+            <input type="checkbox" />
             <div className="collapse-title text-sm font-medium">视觉结果</div>
-            <div className="collapse-content">
+            <div className="collapse-content overflow-hidden">
               <textarea
-                className="textarea textarea-bordered w-full text-xs font-mono h-28"
+                className="textarea textarea-bordered w-full text-xs font-mono h-28 resize-y"
                 value={visionResult}
                 onChange={e => setVisionResult(e.target.value)}
               />
@@ -96,11 +96,11 @@ export default function DetailPanel({ page, masterPrompt, onSave, onRegenerate, 
           </div>
 
           <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" defaultChecked />
+            <input type="checkbox" />
             <div className="collapse-title text-sm font-medium">精炼翻译</div>
-            <div className="collapse-content">
+            <div className="collapse-content overflow-hidden">
               <textarea
-                className="textarea textarea-bordered w-full text-xs font-mono h-28"
+                className="textarea textarea-bordered w-full text-xs font-mono h-28 resize-y"
                 value={refinedTranslation}
                 onChange={e => setRefinedTranslation(e.target.value)}
               />
@@ -108,11 +108,11 @@ export default function DetailPanel({ page, masterPrompt, onSave, onRegenerate, 
           </div>
 
           <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" defaultChecked />
+            <input type="checkbox" />
             <div className="collapse-title text-sm font-medium">最终 Prompt</div>
-            <div className="collapse-content">
+            <div className="collapse-content overflow-hidden">
               <textarea
-                className="textarea textarea-bordered w-full text-xs font-mono h-28"
+                className="textarea textarea-bordered w-full text-xs font-mono h-28 resize-y"
                 value={finalPrompt}
                 onChange={e => setFinalPrompt(e.target.value)}
               />
