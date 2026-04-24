@@ -91,7 +91,14 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     }
 
     const handlePhaseCompleted = (data: PhaseCompleted) => {
-      setState(prev => ({ ...prev, phaseCompleted: data }))
+      if (data.paused) {
+        stopTimer()
+      }
+      setState(prev => ({
+        ...prev,
+        isRunning: data.paused ? false : prev.isRunning,
+        phaseCompleted: data
+      }))
       onUpdate?.()
     }
 
@@ -132,8 +139,14 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
       phaseProgress: null, logs: []
     }))
     startTimer()
-    await window.api.translate.start(projectId)
-  }, [projectId, startTimer])
+    try {
+      await window.api.translate.start(projectId)
+    } catch (error) {
+      stopTimer()
+      setState(prev => ({ ...prev, isRunning: false }))
+      throw error
+    }
+  }, [projectId, startTimer, stopTimer])
 
   const stop = useCallback(async () => {
     if (!projectId) return
@@ -144,9 +157,16 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
 
   const confirmPhase = useCallback(async () => {
     if (!projectId) return
-    setState(prev => ({ ...prev, phaseCompleted: null }))
-    await window.api.translate.confirmPhase(projectId)
-  }, [projectId])
+    setState(prev => ({ ...prev, isRunning: true, phaseCompleted: null }))
+    startTimer()
+    try {
+      await window.api.translate.confirmPhase(projectId)
+    } catch (error) {
+      stopTimer()
+      setState(prev => ({ ...prev, isRunning: false }))
+      throw error
+    }
+  }, [projectId, startTimer, stopTimer])
 
   const retryFailed = useCallback(async () => {
     if (!projectId) return
@@ -155,8 +175,35 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
       pipelineError: null, errors: new Map(), elapsedMs: 0
     }))
     startTimer()
-    await window.api.translate.retryFailed(projectId)
-  }, [projectId, startTimer])
+    try {
+      await window.api.translate.retryFailed(projectId)
+    } catch (error) {
+      stopTimer()
+      setState(prev => ({ ...prev, isRunning: false }))
+      throw error
+    }
+  }, [projectId, startTimer, stopTimer])
 
-  return { ...state, start, stop, confirmPhase, retryFailed }
+  const regeneratePage = useCallback(async (pageId: string) => {
+    if (!projectId) return
+    setState(prev => ({
+      ...prev,
+      isRunning: true,
+      finished: false,
+      pipelineError: null,
+      elapsedMs: 0
+    }))
+    startTimer()
+    try {
+      await window.api.translate.regeneratePage(projectId, pageId)
+      stopTimer()
+      setState(prev => ({ ...prev, isRunning: false }))
+    } catch (error) {
+      stopTimer()
+      setState(prev => ({ ...prev, isRunning: false }))
+      throw error
+    }
+  }, [projectId, startTimer, stopTimer])
+
+  return { ...state, start, stop, confirmPhase, retryFailed, regeneratePage }
 }

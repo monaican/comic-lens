@@ -5,10 +5,14 @@ import { Eye, EyeOff, RotateCcw, Save, Info } from 'lucide-react'
 import AboutModal from './AboutModal'
 import type { AppConfig, ModelConfig } from '../types'
 
-function ModelConfigCard({ label, value, onChange }: {
+function ModelConfigCard({ label, value, onChange, providerOptions = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' }
+] }: {
   label: string
   value: ModelConfig
   onChange: (v: ModelConfig) => void
+  providerOptions?: Array<{ value: string; label: string }>
 }) {
   const [showKey, setShowKey] = useState(false)
 
@@ -21,8 +25,9 @@ function ModelConfigCard({ label, value, onChange }: {
             <label className="label"><span className="label-text text-xs">Provider</span></label>
             <select className="select select-bordered select-sm w-full" value={value.provider}
               onChange={e => onChange({ ...value, provider: e.target.value })}>
-              <option value="openai">OpenAI</option>
-              <option value="anthropic">Anthropic</option>
+              {providerOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
           <div className="form-control">
@@ -63,7 +68,16 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
   const [draft, setDraft] = useState<AppConfig | null>(null)
   const [showAbout, setShowAbout] = useState(false)
 
-  useEffect(() => { if (config) setDraft({ ...config }) }, [config])
+  useEffect(() => {
+    if (!config) return
+    setDraft({
+      ...config,
+      image_gen: {
+        ...config.image_gen,
+        provider: 'openai'
+      }
+    })
+  }, [config])
 
   if (!draft) return <div className="flex items-center justify-center h-full"><span className="loading loading-spinner loading-lg text-primary" /></div>
 
@@ -97,6 +111,7 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
             <ModelConfigCard label="推理模型" value={draft.reasoning_model}
               onChange={v => setDraft({ ...draft, reasoning_model: v })} />
             <ModelConfigCard label="图片生成模型" value={draft.image_gen}
+              providerOptions={[{ value: 'openai', label: 'OpenAI Responses' }]}
               onChange={v => setDraft({ ...draft, image_gen: v })} />
           </div>
 

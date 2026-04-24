@@ -48,6 +48,13 @@ function App(): React.ReactElement {
   ]
 
   const activeWorkspace = workspaceTabs.find(t => t.id === activeTab)
+  const handleProjectChange = useCallback((project: Project) => {
+    setWorkspaceTabs(prev => prev.map(tab =>
+      tab.projectId === project.id
+        ? { ...tab, label: project.name, status: project.status }
+        : tab
+    ))
+  }, [])
 
   return (
     <div data-theme={theme} className="h-screen flex flex-col">
@@ -56,7 +63,13 @@ function App(): React.ReactElement {
       <div className="flex-1 overflow-hidden">
         {activeTab === 'bookshelf' && <Bookshelf onOpenProject={openProject} />}
         {activeTab === 'settings' && <Settings theme={theme} onThemeChange={setTheme} />}
-        {activeWorkspace && <Workspace projectId={activeWorkspace.projectId} />}
+        {activeWorkspace && (
+          <Workspace
+            key={activeWorkspace.projectId}
+            projectId={activeWorkspace.projectId}
+            onProjectChange={handleProjectChange}
+          />
+        )}
       </div>
       <Toast />
     </div>

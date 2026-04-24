@@ -1,7 +1,6 @@
-import { readdirSync, readFileSync, mkdirSync, statSync } from 'fs'
-import { join, extname } from 'path'
-
-const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.bmp'])
+import { readdirSync, readFileSync, mkdirSync, statSync, rmSync, existsSync } from 'fs'
+import { join } from 'path'
+import { naturalSortFilenames, validateImagePath } from './safety-utils'
 
 export function scanImages(directory: string): string[] {
   try {
@@ -10,17 +9,21 @@ export function scanImages(directory: string): string[] {
   } catch {
     return []
   }
-  const files = readdirSync(directory)
+  const files = naturalSortFilenames(readdirSync(directory)
     .filter(f => {
-      const ext = extname(f).toLowerCase()
-      return IMAGE_EXTENSIONS.has(ext)
-    })
-    .sort()
+      try {
+        validateImagePath(f)
+        return true
+      } catch {
+        return false
+      }
+    }))
   return files.map(f => join(directory, f))
 }
 
 export function readImageAsBase64(imagePath: string): { base64: string; mimeType: string } {
-  const ext = extname(imagePath).toLowerCase()
+  const validatedPath = validateImagePath(imagePath)
+  const ext = validatedPath.slice(validatedPath.lastIndexOf('.')).toLowerCase()
   const mimeMap: Record<string, string> = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -29,7 +32,7 @@ export function readImageAsBase64(imagePath: string): { base64: string; mimeType
     '.bmp': 'image/bmp'
   }
   const mimeType = mimeMap[ext] || 'image/png'
-  const buffer = readFileSync(imagePath)
+  const buffer = readFileSync(validatedPath)
   const base64 = buffer.toString('base64')
   return { base64, mimeType }
 }
@@ -44,5 +47,10 @@ export function getCoverPath(directory: string): string | null {
 }
 
 export function readImageBuffer(imagePath: string): Buffer {
-  return readFileSync(imagePath)
+  return readFileSync(validateImagePath(imagePath))
+}
+
+export function removeDirectoryIfExists(directory: string): void {
+  if (!existsSync(directory)) return
+  rmSync(directory, { recursive: true, force: true })
 }

@@ -4,10 +4,11 @@ import {
   createPage, getPage, listPages, updatePage
 } from './database'
 import { loadConfig, saveConfig, type AppConfig } from './config'
-import { scanImages, getCoverPath, readImageAsBase64 } from './file-service'
-import { startTranslation, stopTranslation, confirmPhase, retryFailed } from './translate-pipeline'
-import { generateThumbnail, getThumbnail, generateAllThumbnails } from './thumbnail-service'
-import { basename } from 'path'
+import { scanImages, getCoverPath, readImageAsBase64, removeDirectoryIfExists } from './file-service'
+import { startTranslation, stopTranslation, confirmPhase, retryFailed, regeneratePageImage } from './translate-pipeline'
+import { generateThumbnail, getThumbnail, generateAllThumbnails, deleteProjectThumbnails } from './thumbnail-service'
+import { basename, join } from 'path'
+import { buildProjectOutputDir, validateImageFilename } from './safety-utils'
 
 export function registerIpcHandlers(): void {
   // Projects
@@ -17,8 +18,10 @@ export function registerIpcHandlers(): void {
     name: string; sourceDir: string; outputDir: string;
     sourceLang: string; targetLang: string; translateMode: string
   }) => {
+    const config = loadConfig()
+    const outputDir = buildProjectOutputDir(config.output_base_dir, data.name)
     const pid = createProject(
-      data.name, data.sourceDir, data.outputDir,
+      data.name, data.sourceDir, outputDir,
       data.sourceLang, data.targetLang, data.translateMode
     )
     const images = scanImages(data.sourceDir)
@@ -37,7 +40,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('db:projects:update', (_, id: string, fields: Record<string, unknown>) => {
     updateProject(id, fields)
   })
-  ipcMain.handle('db:projects:delete', (_, id: string) => deleteProject(id))
+  ipcMain.handle('db:projects:delete', (_, id: string) => {
+    const project = getProject(id)
+    deleteProject(id)
+    deleteProjectThumbnails(id)
+    if (project?.output_dir && typeof project.output_dir === 'string') {
+      removeDirectoryIfExists(project.output_dir)
+    }
+  })
 
   // Pages
   ipcMain.handle('db:pages:list', (_, projectId: string) => listPages(projectId))
@@ -57,9 +67,21 @@ export function registerIpcHandlers(): void {
     const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
     return result.canceled ? null : result.filePaths[0]
   })
-  ipcMain.handle('file:scan-images', (_, dir: string) => scanImages(dir))
-  ipcMain.handle('file:get-cover', (_, dir: string) => getCoverPath(dir))
-  ipcMain.handle('file:read-image', (_, path: string) => readImageAsBase64(path))
+  ipcMain.handle('file:get-project-cover', (_, projectId: string) => {
+    const project = getProject(projectId)
+    if (!project || typeof project.source_dir !== 'string') return null
+    const coverPath = getCoverPath(project.source_dir)
+    return coverPath ? readImageAsBase64(coverPath) : null
+  })
+  ipcMain.handle('file:read-project-image', (_, projectId: string, filename: string, kind: 'source' | 'output') => {
+    const project = getProject(projectId)
+    if (!project) throw new Error('项目不存在')
+    const safeFilename = validateImageFilename(filename)
+    const baseDir = kind === 'output'
+      ? project.output_dir as string
+      : project.source_dir as string
+    return readImageAsBase64(join(baseDir, safeFilename))
+  })
 
   // Thumbnails
   ipcMain.handle('thumbnail:get', (_, projectId: string, filename: string) =>
@@ -77,18 +99,23 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('translate:start', (event, projectId: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
-    startTranslation(projectId, win)
+    return startTranslation(projectId, win)
   })
   ipcMain.handle('translate:stop', (_, projectId: string) => stopTranslation(projectId))
   ipcMain.handle('translate:confirm-phase', (event, projectId: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
-    confirmPhase(projectId, win)
+    return confirmPhase(projectId, win)
   })
   ipcMain.handle('translate:retry-failed', (event, projectId: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
-    retryFailed(projectId, win)
+    return retryFailed(projectId, win)
+  })
+  ipcMain.handle('translate:regenerate-page', (event, projectId: string, pageId: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    return regeneratePageImage(projectId, pageId, win)
   })
 
   // Window controls

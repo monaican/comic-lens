@@ -3,7 +3,8 @@ import { type ModelConfig } from './config'
 export async function analyzeGlobal(
   config: ModelConfig,
   visionResults: Record<string, string>,
-  systemPrompt: string
+  systemPrompt: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const filenames = Object.keys(visionResults).sort()
   let pagesText = ''
@@ -13,26 +14,30 @@ export async function analyzeGlobal(
   const userMessage = `以下是所有页面的识图分析结果：\n${pagesText}`
 
   if (config.provider === 'anthropic') {
-    return callAnthropicReasoning(config, systemPrompt, userMessage)
+    return callAnthropicReasoning(config, systemPrompt, userMessage, signal)
   }
-  return callOpenAIReasoning(config, systemPrompt, userMessage)
+  return callOpenAIReasoning(config, systemPrompt, userMessage, signal)
 }
 
 export async function translatePage(
   config: ModelConfig,
   systemPrompt: string,
-  visionResult: string
+  visionResult: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const userMessage = `以下是本页的识图分析结果：\n\n${visionResult}`
 
   if (config.provider === 'anthropic') {
-    return callAnthropicReasoning(config, systemPrompt, userMessage)
+    return callAnthropicReasoning(config, systemPrompt, userMessage, signal)
   }
-  return callOpenAIReasoning(config, systemPrompt, userMessage)
+  return callOpenAIReasoning(config, systemPrompt, userMessage, signal)
 }
 
 async function callOpenAIReasoning(
-  config: ModelConfig, systemPrompt: string, userMessage: string
+  config: ModelConfig,
+  systemPrompt: string,
+  userMessage: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const url = config.base_url.replace(/\/+$/, '') + '/chat/completions'
   const payload = {
@@ -50,7 +55,9 @@ async function callOpenAIReasoning(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(300000)
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(300000)])
+      : AbortSignal.timeout(300000)
   })
   if (!resp.ok) {
     const detail = await resp.text()
@@ -61,7 +68,10 @@ async function callOpenAIReasoning(
 }
 
 async function callAnthropicReasoning(
-  config: ModelConfig, systemPrompt: string, userMessage: string
+  config: ModelConfig,
+  systemPrompt: string,
+  userMessage: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const url = config.base_url.replace(/\/+$/, '') + '/messages'
   const payload = {
@@ -78,7 +88,9 @@ async function callAnthropicReasoning(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(300000)
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(300000)])
+      : AbortSignal.timeout(300000)
   })
   if (!resp.ok) {
     const detail = await resp.text()

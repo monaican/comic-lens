@@ -3,15 +3,24 @@ import { randomUUID } from 'crypto'
 import { join } from 'path'
 import { app } from 'electron'
 import { mkdirSync } from 'fs'
+import { filterAllowedFields } from './safety-utils'
 
 let db: Database.Database
+const PROJECT_UPDATE_FIELDS = [
+  'name', 'source_dir', 'output_dir', 'source_lang', 'target_lang',
+  'master_prompt', 'status', 'translate_mode', 'current_phase', 'phase_confirmed'
+] as const
+const PAGE_UPDATE_FIELDS = [
+  'summary', 'vision_result', 'refined_translation', 'final_prompt',
+  'status', 'error_message', 'retry_count', 'edited'
+] as const
 
 function now(): string {
   return new Date().toISOString()
 }
 
 export function initDatabase(): void {
-  const dir = join(app.getAppPath(), 'data')
+  const dir = app.getPath('userData')
   mkdirSync(dir, { recursive: true })
   const dbPath = join(dir, 'comics.db')
   db = new Database(dbPath)
@@ -108,10 +117,12 @@ export function listProjects(): Record<string, unknown>[] {
 }
 
 export function updateProject(id: string, fields: Record<string, unknown>): void {
-  fields.updated_at = now()
-  const keys = Object.keys(fields)
+  const safeFields = filterAllowedFields(fields, PROJECT_UPDATE_FIELDS)
+  safeFields.updated_at = now()
+  const keys = Object.keys(safeFields)
+  if (keys.length === 0) return
   const sets = keys.map(k => `${k}=?`).join(', ')
-  db.prepare(`UPDATE projects SET ${sets} WHERE id=?`).run(...keys.map(k => fields[k]), id)
+  db.prepare(`UPDATE projects SET ${sets} WHERE id=?`).run(...keys.map(k => safeFields[k]), id)
 }
 
 export function deleteProject(id: string): void {
@@ -137,10 +148,12 @@ export function listPages(projectId: string): Record<string, unknown>[] {
 }
 
 export function updatePage(id: string, fields: Record<string, unknown>): void {
-  fields.updated_at = now()
-  const keys = Object.keys(fields)
+  const safeFields = filterAllowedFields(fields, PAGE_UPDATE_FIELDS)
+  safeFields.updated_at = now()
+  const keys = Object.keys(safeFields)
+  if (keys.length === 0) return
   const sets = keys.map(k => `${k}=?`).join(', ')
-  db.prepare(`UPDATE pages SET ${sets} WHERE id=?`).run(...keys.map(k => fields[k]), id)
+  db.prepare(`UPDATE pages SET ${sets} WHERE id=?`).run(...keys.map(k => safeFields[k]), id)
 }
 
 export function closeDatabase(): void {

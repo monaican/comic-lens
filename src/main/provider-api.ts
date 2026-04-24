@@ -2,13 +2,20 @@ export function buildResponsesEndpoint(baseUrl: string): string {
   const normalized = baseUrl.trim().replace(/\/+$/, '')
   if (!normalized) throw new Error('BASE_URL 为空')
   if (normalized.endsWith('/v1/responses')) return normalized
+  if (normalized.endsWith('/v1')) return `${normalized}/responses`
   return `${normalized}/v1/responses`
 }
 
 export async function sendImageGenRequest(
-  baseUrl: string, apiKey: string, payload: Record<string, unknown>
+  baseUrl: string,
+  apiKey: string,
+  payload: Record<string, unknown>,
+  signal?: AbortSignal
 ): Promise<string> {
   const endpoint = buildResponsesEndpoint(baseUrl)
+  const requestSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(600000)])
+    : AbortSignal.timeout(600000)
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -17,7 +24,7 @@ export async function sendImageGenRequest(
       'accept': 'text/event-stream'
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(600000)
+    signal: requestSignal
   })
   if (!resp.ok) {
     const detail = await resp.text()
@@ -53,12 +60,12 @@ interface SSEEvent {
 
 export function parseSSEEvents(sseText: string): SSEEvent[] {
   const events: SSEEvent[] = []
-  for (const block of sseText.split('\n\n')) {
+  for (const block of sseText.split(/\r?\n\r?\n/)) {
     const stripped = block.trim()
     if (!stripped) continue
     let eventName = ''
     const dataLines: string[] = []
-    for (const line of stripped.split('\n')) {
+    for (const line of stripped.split(/\r?\n/)) {
       if (line.startsWith('event:')) {
         eventName = line.slice(6).trim()
       } else if (line.startsWith('data:')) {

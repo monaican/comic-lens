@@ -1,18 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface Props {
   open: boolean
   defaultSourceLang: string
   defaultTargetLang: string
+  defaultOutputBaseDir: string
   onClose: () => void
   onImport: (data: { name: string; sourceDir: string; outputDir: string; sourceLang: string; targetLang: string; translateMode: string }) => void
 }
 
-export default function ImportModal({ open, defaultSourceLang, defaultTargetLang, onClose, onImport }: Props) {
+export default function ImportModal({
+  open,
+  defaultSourceLang,
+  defaultTargetLang,
+  defaultOutputBaseDir,
+  onClose,
+  onImport
+}: Props) {
   const [sourceDir, setSourceDir] = useState('')
   const [sourceLang, setSourceLang] = useState(defaultSourceLang)
   const [targetLang, setTargetLang] = useState(defaultTargetLang)
   const [translateMode, setTranslateMode] = useState('auto')
+
+  useEffect(() => {
+    if (!open) return
+    setSourceLang(defaultSourceLang)
+    setTargetLang(defaultTargetLang)
+    setTranslateMode('auto')
+  }, [defaultSourceLang, defaultTargetLang, open])
 
   const handleSelectFolder = async () => {
     const path = await window.api.file.selectFolder()
@@ -25,7 +40,7 @@ export default function ImportModal({ open, defaultSourceLang, defaultTargetLang
     onImport({
       name,
       sourceDir,
-      outputDir: `output/${name}`,
+      outputDir: `${defaultOutputBaseDir}/${name}`,
       sourceLang,
       targetLang,
       translateMode

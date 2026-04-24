@@ -5,7 +5,8 @@ import { resizeImageIfNeeded } from './image-utils'
 export async function analyzePageVision(
   config: ModelConfig,
   imagePath: string,
-  prompt: string
+  prompt: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const { base64, mimeType } = readImageAsBase64(imagePath)
   const resized = await resizeImageIfNeeded(Buffer.from(base64, 'base64'))
@@ -13,12 +14,17 @@ export async function analyzePageVision(
   const dataUrl = `data:${mimeType};base64,${b64}`
 
   if (config.provider === 'anthropic') {
-    return callAnthropicVision(config, prompt, b64, mimeType)
+    return callAnthropicVision(config, prompt, b64, mimeType, signal)
   }
-  return callOpenAIVision(config, prompt, dataUrl)
+  return callOpenAIVision(config, prompt, dataUrl, signal)
 }
 
-async function callOpenAIVision(config: ModelConfig, prompt: string, dataUrl: string): Promise<string> {
+async function callOpenAIVision(
+  config: ModelConfig,
+  prompt: string,
+  dataUrl: string,
+  signal?: AbortSignal
+): Promise<string> {
   const url = config.base_url.replace(/\/+$/, '') + '/chat/completions'
   const payload = {
     model: config.model,
@@ -38,7 +44,9 @@ async function callOpenAIVision(config: ModelConfig, prompt: string, dataUrl: st
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(120000)
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(120000)])
+      : AbortSignal.timeout(120000)
   })
   if (!resp.ok) {
     const detail = await resp.text()
@@ -49,7 +57,11 @@ async function callOpenAIVision(config: ModelConfig, prompt: string, dataUrl: st
 }
 
 async function callAnthropicVision(
-  config: ModelConfig, prompt: string, b64Data: string, mimeType: string
+  config: ModelConfig,
+  prompt: string,
+  b64Data: string,
+  mimeType: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const url = config.base_url.replace(/\/+$/, '') + '/messages'
   const payload = {
@@ -71,7 +83,9 @@ async function callAnthropicVision(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(120000)
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(120000)])
+      : AbortSignal.timeout(120000)
   })
   if (!resp.ok) {
     const detail = await resp.text()

@@ -85,6 +85,7 @@
     "@electron/rebuild": "^4.0.4",
     "@tailwindcss/vite": "^4.2.4",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.9.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",

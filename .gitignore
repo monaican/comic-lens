@@ -1,4 +1,7 @@
 node_modules/
+.npm-cache/
+.pnpm-home/
+.electron-cache/
 out/
 dist/
 build/icon.png

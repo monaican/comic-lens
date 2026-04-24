@@ -10,20 +10,37 @@ import DetailPanel from './DetailPanel'
 import LogModal from './LogModal'
 import type { Project, TranslateMode } from '../types'
 
-interface Props { projectId: string }
+interface Props {
+  projectId: string
+  onProjectChange?: (project: Project) => void
+}
 
-export default function Workspace({ projectId }: Props) {
+export default function Workspace({ projectId, onProjectChange }: Props) {
   const [project, setProject] = useState<Project | null>(null)
   const { pages, updatePage, refresh: refreshPages } = usePages(projectId)
-  const translation = useTranslation(projectId, refreshPages)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const [showLog, setShowLog] = useState(false)
 
+  const refreshProject = useCallback(async () => {
+    const updated = await window.api.projects.get(projectId)
+    if (updated) {
+      setProject(updated)
+      onProjectChange?.(updated)
+    }
+  }, [onProjectChange, projectId])
+
+  const refreshWorkspace = useCallback(() => {
+    void refreshPages()
+    void refreshProject()
+  }, [refreshPages, refreshProject])
+
+  const translation = useTranslation(projectId, refreshWorkspace)
+
   useEffect(() => {
-    window.api.projects.get(projectId).then(p => p && setProject(p))
-  }, [projectId])
+    void refreshProject()
+  }, [refreshProject])
 
   useEffect(() => {
     if (pages.length > 0 && !selectedPageId) {
@@ -33,15 +50,13 @@ export default function Workspace({ projectId }: Props) {
 
   const handleModeChange = useCallback(async (mode: TranslateMode) => {
     await window.api.projects.update(projectId, { translate_mode: mode })
-    const updated = await window.api.projects.get(projectId)
-    if (updated) setProject(updated)
-  }, [projectId])
+    await refreshProject()
+  }, [projectId, refreshProject])
 
   const handleMasterPromptSave = useCallback(async (prompt: string) => {
     await window.api.projects.update(projectId, { master_prompt: prompt })
-    const updated = await window.api.projects.get(projectId)
-    if (updated) setProject(updated)
-  }, [projectId])
+    await refreshProject()
+  }, [projectId, refreshProject])
 
   const selectedPage = pages.find(p => p.id === selectedPageId) || null
 
@@ -88,7 +103,7 @@ export default function Workspace({ projectId }: Props) {
         >{leftCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}</button>
 
         <div className="flex-1 overflow-hidden">
-          <ImageViewer page={selectedPage} sourceDir={project.source_dir} outputDir={project.output_dir} />
+          <ImageViewer page={selectedPage} projectId={projectId} />
         </div>
 
         <button
@@ -101,7 +116,7 @@ export default function Workspace({ projectId }: Props) {
               page={selectedPage}
               masterPrompt={project.master_prompt}
               onSave={updatePage}
-              onRegenerate={async () => {}}
+              onRegenerate={translation.regeneratePage}
               onMasterPromptSave={handleMasterPromptSave}
             />
           </div>

@@ -10,14 +10,18 @@ export async function translatePageImage(
   imagePath: string,
   prompt: string,
   outputDir: string,
-  outputFilename: string
+  outputFilename: string,
+  signal?: AbortSignal
 ): Promise<string> {
+  if (config.provider && config.provider !== 'openai') {
+    throw new Error('图片生成仅支持 OpenAI Responses 接口')
+  }
   const { base64, mimeType } = readImageAsBase64(imagePath)
   const resized = await resizeImageIfNeeded(Buffer.from(base64, 'base64'))
   const dataUrl = `data:${mimeType};base64,${resized.toString('base64')}`
 
   const payload = buildEditPayload(config.model, prompt, dataUrl)
-  const sseText = await sendImageGenRequest(config.base_url, config.api_key, payload)
+  const sseText = await sendImageGenRequest(config.base_url, config.api_key, payload, signal)
   const { result } = extractImageResult(sseText)
 
   ensureOutputDir(outputDir)

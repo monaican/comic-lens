@@ -73,6 +73,7 @@ export interface PhaseProgress {
 export interface PhaseCompleted {
   phase: Phase
   nextPhase: Phase | null
+  paused: boolean
 }
 
 export interface LogEntry {
@@ -102,9 +103,12 @@ declare global {
       }
       file: {
         selectFolder: () => Promise<string | null>
-        scanImages: (dir: string) => Promise<string[]>
-        getCover: (dir: string) => Promise<string | null>
-        readImage: (path: string) => Promise<{ base64: string; mimeType: string }>
+        getProjectCover: (projectId: string) => Promise<{ base64: string; mimeType: string } | null>
+        readProjectImage: (
+          projectId: string,
+          filename: string,
+          kind: 'source' | 'output'
+        ) => Promise<{ base64: string; mimeType: string }>
       }
       thumbnail: {
         get: (projectId: string, filename: string) => Promise<string | null>
@@ -118,10 +122,11 @@ declare global {
         stop: (projectId: string) => Promise<void>
         confirmPhase: (projectId: string) => Promise<void>
         retryFailed: (projectId: string) => Promise<void>
+        regeneratePage: (projectId: string, pageId: string) => Promise<void>
         onPageProgress: (cb: (data: TranslateProgress) => void) => void
         onPageFinished: (cb: (data: { pageId: string; phase: Phase; result: string }) => void) => void
         onPageError: (cb: (data: { pageId: string; phase: Phase; error: string }) => void) => void
-        onPhaseStarted: (cb: (data: { phase: Phase }) => void) => void
+        onPhaseStarted: (cb: (data: { phase: Phase; total: number }) => void) => void
         onPhaseCompleted: (cb: (data: PhaseCompleted) => void) => void
         onAllFinished: (cb: (data: { projectId: string }) => void) => void
         onPipelineError: (cb: (data: { projectId: string; error: string }) => void) => void

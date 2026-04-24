@@ -67,6 +67,7 @@ export default function Bookshelf({ onOpenProject }: Props) {
         open={showImport}
         defaultSourceLang={config?.default_source_lang || '日本語'}
         defaultTargetLang={config?.default_target_lang || '简体中文'}
+        defaultOutputBaseDir={config?.output_base_dir || 'output'}
         onClose={() => setShowImport(false)}
         onImport={handleImport}
       />

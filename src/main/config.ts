@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { app } from 'electron'
+import { mergeAppConfig } from './config-utils'
 
 export interface ModelConfig {
   provider: string
@@ -73,14 +74,14 @@ export const DEFAULT_PAGE_TRANSLATE_PROMPT = `你是一个专业的漫画翻译�
 export const DEFAULT_IMAGE_GEN_PROMPT = '根据图片,画一个图片，在不改变排版和字体的情况下将{source_lang}改为{target_lang},参考译文：\n{refined}'
 
 function getConfigPath(): string {
-  return join(app.getAppPath(), 'data', 'config.json')
+  return join(app.getPath('userData'), 'config.json')
 }
 
 function defaultConfig(): AppConfig {
   return {
     vision_model: { provider: 'openai', base_url: 'https://api.openai.com/v1', api_key: '', model: 'gpt-4o' },
     reasoning_model: { provider: 'anthropic', base_url: 'https://api.anthropic.com/v1', api_key: '', model: 'claude-sonnet-4-6' },
-    image_gen: { provider: '', base_url: '', api_key: '', model: 'gpt-image-2' },
+    image_gen: { provider: 'openai', base_url: 'https://api.openai.com/v1/responses', api_key: '', model: 'gpt-image-2' },
     concurrency: 3,
     max_retries: 3,
     output_base_dir: 'output',
@@ -101,12 +102,12 @@ export function loadConfig(): AppConfig {
     return cfg
   }
   const raw = JSON.parse(readFileSync(configPath, 'utf-8'))
-  return { ...defaultConfig(), ...raw }
+  return mergeAppConfig(defaultConfig(), raw)
 }
 
 export function saveConfig(config: AppConfig): void {
   const configPath = getConfigPath()
-  const dir = join(app.getAppPath(), 'data')
+  const dir = app.getPath('userData')
   mkdirSync(dir, { recursive: true })
   writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
 }

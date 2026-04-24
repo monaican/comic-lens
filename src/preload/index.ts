@@ -19,9 +19,9 @@ const api = {
   },
   file: {
     selectFolder: () => ipcRenderer.invoke('file:select-folder'),
-    scanImages: (dir: string) => ipcRenderer.invoke('file:scan-images', dir),
-    getCover: (dir: string) => ipcRenderer.invoke('file:get-cover', dir),
-    readImage: (path: string) => ipcRenderer.invoke('file:read-image', path)
+    getProjectCover: (projectId: string) => ipcRenderer.invoke('file:get-project-cover', projectId),
+    readProjectImage: (projectId: string, filename: string, kind: 'source' | 'output') =>
+      ipcRenderer.invoke('file:read-project-image', projectId, filename, kind)
   },
   thumbnail: {
     get: (projectId: string, filename: string) => ipcRenderer.invoke('thumbnail:get', projectId, filename),
@@ -39,6 +39,7 @@ const api = {
     stop: (projectId: string) => ipcRenderer.invoke('translate:stop', projectId),
     confirmPhase: (projectId: string) => ipcRenderer.invoke('translate:confirm-phase', projectId),
     retryFailed: (projectId: string) => ipcRenderer.invoke('translate:retry-failed', projectId),
+    regeneratePage: (projectId: string, pageId: string) => ipcRenderer.invoke('translate:regenerate-page', projectId, pageId),
     onPageProgress: (cb: (data: unknown) => void) => {
       ipcRenderer.on('translate:page-progress', (_, data) => cb(data))
     },

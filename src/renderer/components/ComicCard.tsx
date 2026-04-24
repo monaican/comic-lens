@@ -21,12 +21,12 @@ export default function ComicCard({ project, onOpen, onDelete }: Props) {
   const badge = statusBadge[project.status] || statusBadge.idle
 
   useEffect(() => {
-    window.api.file.getCover(project.source_dir).then(async (path) => {
-      if (!path) return
-      const { base64, mimeType } = await window.api.file.readImage(path)
+    window.api.file.getProjectCover(project.id).then((image) => {
+      if (!image) return
+      const { base64, mimeType } = image
       setCoverSrc(`data:${mimeType};base64,${base64}`)
     })
-  }, [project.source_dir])
+  }, [project.id])
 
   return (
     <div

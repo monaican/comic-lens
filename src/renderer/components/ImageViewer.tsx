@@ -3,13 +3,12 @@ import type { Page } from '../types'
 
 interface Props {
   page: Page | null
-  sourceDir: string
-  outputDir: string
+  projectId: string
 }
 
 type ViewMode = 'original' | 'translated' | 'split'
 
-export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
+export default function ImageViewer({ page, projectId }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('original')
   const [originalSrc, setOriginalSrc] = useState<string | null>(null)
   const [translatedSrc, setTranslatedSrc] = useState<string | null>(null)
@@ -30,18 +29,16 @@ export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
     setPosition({ x: 0, y: 0 })
     if (!page) return
 
-    const origPath = `${sourceDir}/${page.filename}`.replace(/\\/g, '/')
-    window.api.file.readImage(origPath).then(({ base64, mimeType }) => {
+    window.api.file.readProjectImage(projectId, page.filename, 'source').then(({ base64, mimeType }) => {
       setOriginalSrc(`data:${mimeType};base64,${base64}`)
     }).catch(() => {})
 
     if (page.status === 'completed') {
-      const transPath = `${outputDir}/${page.filename}`.replace(/\\/g, '/')
-      window.api.file.readImage(transPath).then(({ base64, mimeType }) => {
+      window.api.file.readProjectImage(projectId, page.filename, 'output').then(({ base64, mimeType }) => {
         setTranslatedSrc(`data:${mimeType};base64,${base64}`)
       }).catch(() => {})
     }
-  }, [page, sourceDir, outputDir])
+  }, [page, projectId])
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
