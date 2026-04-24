@@ -1,6 +1,6 @@
 {
   "name": "comic-lens",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "AI-powered comic/manga translation desktop app",
   "main": "./out/main/index.js",
   "author": "ComicLens",
@@ -51,7 +51,9 @@
       "icon": "build/icon.png"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.png",
       "category": "Utility"
     },
