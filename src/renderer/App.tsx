@@ -55,7 +55,7 @@ function App(): React.ReactElement {
       <TabBar tabs={tabs} activeId={activeTab} onSelect={setActiveTab} onClose={closeTab} />
       <div className="flex-1 overflow-hidden">
         {activeTab === 'bookshelf' && <Bookshelf onOpenProject={openProject} />}
-        {activeTab === 'settings' && <Settings />}
+        {activeTab === 'settings' && <Settings theme={theme} onThemeChange={setTheme} />}
         {activeWorkspace && <Workspace projectId={activeWorkspace.projectId} />}
       </div>
       <Toast />
