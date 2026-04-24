@@ -4,7 +4,7 @@ export default function TitleBar() {
   return (
     <div className="flex items-center justify-between h-9 bg-primary text-primary-content select-none"
          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
-      <div className="pl-3 text-sm font-medium tracking-wide">漫画翻译</div>
+      <div className="pl-3 text-sm font-medium tracking-wide">ComicLens</div>
       <div className="flex" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <button className="btn btn-ghost btn-xs rounded-none w-10 h-9 text-primary-content/80 hover:text-primary-content hover:bg-primary-content/10"
                 onClick={() => window.api.window.minimize()}><Minus className="w-4 h-4" /></button>

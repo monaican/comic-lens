@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useConfig } from '../hooks/useConfig'
 import { showToast } from './Toast'
-import { Eye, EyeOff, RotateCcw, Save } from 'lucide-react'
+import { Eye, EyeOff, RotateCcw, Save, Info } from 'lucide-react'
+import AboutModal from './AboutModal'
 import type { AppConfig, ModelConfig } from '../types'
 
 function ModelConfigCard({ label, value, onChange }: {
@@ -60,6 +61,7 @@ interface SettingsProps {
 export default function Settings({ theme, onThemeChange }: SettingsProps) {
   const { config, saveConfig } = useConfig()
   const [draft, setDraft] = useState<AppConfig | null>(null)
+  const [showAbout, setShowAbout] = useState(false)
 
   useEffect(() => { if (config) setDraft({ ...config }) }, [config])
 
@@ -164,11 +166,15 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
         </div>
       </div>
 
-      <div className="border-t border-base-300 bg-base-100 px-6 py-3 flex justify-end">
+      <div className="border-t border-base-300 bg-base-100 px-6 py-3 flex justify-between items-center">
+        <button className="btn btn-ghost btn-sm gap-1" onClick={() => setShowAbout(true)}>
+          <Info className="w-4 h-4" />关于
+        </button>
         <button className="btn btn-primary btn-wide gap-2" onClick={handleSave}>
           <Save className="w-4 h-4" />保存设置
         </button>
       </div>
+      <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
     </div>
   )
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-An Electron desktop app for translating comics/manga. It uses AI vision models to read comic pages, reasoning models to produce translations, and image generation models to render translated pages. The UI is in Chinese (Simplified). Uses lucide-react for icons — no emoji anywhere in the project.
+ComicLens — an Electron desktop app for translating comics/manga. It uses AI vision models to read comic pages, reasoning models to produce translations, and image generation models to render translated pages. The UI is in Chinese (Simplified). Uses lucide-react for icons — no emoji anywhere in the project.
 
 ## Commands
 

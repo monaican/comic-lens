@@ -1,6 +1,7 @@
 node_modules/
 out/
 dist/
+build/icon.png
 build/
 
 data/comics.db

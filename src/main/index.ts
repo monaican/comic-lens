@@ -12,6 +12,7 @@ function createWindow(): void {
     height: 800,
     minWidth: 1000,
     minHeight: 700,
+    title: 'ComicLens',
     frame: false,
     show: false,
     webPreferences: {
