@@ -41,6 +41,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Hoist native dependencies
+        run: node scripts/hoist-sharp.js
+
       - name: Package (Windows)
         if: matrix.platform == 'win'
         run: npx electron-builder --win --x64

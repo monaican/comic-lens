@@ -10,7 +10,8 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
-    "pack": "electron-vite build && electron-builder --win"
+    "prebuild:native": "node scripts/hoist-sharp.js",
+    "pack": "electron-vite build && node scripts/hoist-sharp.js && electron-builder --win"
   },
   "build": {
     "appId": "com.comiclens.app",
@@ -19,23 +20,15 @@
       "output": "dist"
     },
     "files": [
-      "out/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "node_modules/better-sqlite3",
-        "to": "node_modules/better-sqlite3",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "node_modules/sharp",
-        "to": "node_modules/sharp",
-        "filter": [
-          "**/*"
-        ]
-      }
+      "out/**/*",
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/detect-libc/**/*",
+      "node_modules/semver/**/*",
+      "node_modules/bindings/**/*",
+      "node_modules/file-uri-to-path/**/*",
+      "node_modules/prebuild-install/**/*"
     ],
     "asar": true,
     "asarUnpack": [
