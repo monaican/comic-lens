@@ -8,6 +8,7 @@ data/comics.db-shm
 data/comics.db-wal
 data/config.json
 data/logs/
+data/thumbnails/
 
 output/
 
