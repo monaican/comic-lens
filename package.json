@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "preview": "electron-vite preview"
+    "preview": "electron-vite preview",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@electron/rebuild": "^4.0.4",
     "@tailwindcss/vite": "^4.2.4",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.14",
