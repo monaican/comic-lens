@@ -36,7 +36,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --include=optional
 
       - name: Build
         run: pnpm run build
