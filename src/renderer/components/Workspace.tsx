@@ -89,6 +89,7 @@ export default function Workspace({ projectId, onProjectChange }: Props) {
         onRetryFailed={translation.retryFailed}
         logCount={translation.logs.length}
         onShowLog={() => setShowLog(true)}
+        outputDir={project.output_dir}
       />
       <PhaseConfirmBar phaseCompleted={phaseCompleted} onConfirm={translation.confirmPhase} />
       {workspaceAlert && (

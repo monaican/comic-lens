@@ -42,7 +42,7 @@ function defaultConfig(): AppConfig {
     image_gen: { provider: 'openai', base_url: 'https://api.openai.com/v1/responses', api_key: '', model: 'gpt-image-2' },
     concurrency: 3,
     max_retries: 3,
-    output_base_dir: 'output',
+    output_base_dir: join(app.getPath('downloads'), 'ComicLens'),
     default_source_lang: '日本語',
     default_target_lang: '简体中文',
     vision_prompt: '',

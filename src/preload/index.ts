@@ -19,6 +19,7 @@ const api = {
   },
   file: {
     selectFolder: () => ipcRenderer.invoke('file:select-folder'),
+    openFolder: (folderPath: string) => ipcRenderer.invoke('file:open-folder', folderPath),
     getProjectCover: (projectId: string) => ipcRenderer.invoke('file:get-project-cover', projectId),
     readProjectImage: (projectId: string, filename: string, kind: 'source' | 'output') =>
       ipcRenderer.invoke('file:read-project-image', projectId, filename, kind)

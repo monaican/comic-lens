@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import {
   createProject, getProject, listProjects, updateProject, deleteProject,
   createPage, getPage, listPages, updatePage
@@ -67,6 +67,9 @@ export function registerIpcHandlers(): void {
     if (!win) return null
     const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
     return result.canceled ? null : result.filePaths[0]
+  })
+  ipcMain.handle('file:open-folder', (_, folderPath: string) => {
+    shell.openPath(folderPath)
   })
   ipcMain.handle('file:get-project-cover', (_, projectId: string) => {
     const project = getProject(projectId)

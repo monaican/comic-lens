@@ -79,20 +79,23 @@ function App(): React.ReactElement {
       <TitleBar />
       <TabBar tabs={tabs} activeId={activeTab} onSelect={setActiveTab} onClose={closeTab} />
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'bookshelf' && (
+        <div className={activeTab === 'bookshelf' ? 'h-full' : 'hidden'}>
           <Bookshelf
             onOpenProject={openProject}
             onProjectDeleted={handleProjectDeleted}
           />
-        )}
-        {activeTab === 'settings' && <Settings theme={theme} onThemeChange={setTheme} />}
-        {activeWorkspace && (
-          <Workspace
-            key={activeWorkspace.projectId}
-            projectId={activeWorkspace.projectId}
-            onProjectChange={handleProjectChange}
-          />
-        )}
+        </div>
+        <div className={activeTab === 'settings' ? 'h-full' : 'hidden'}>
+          <Settings theme={theme} onThemeChange={setTheme} />
+        </div>
+        {workspaceTabs.map(tab => (
+          <div key={tab.projectId} className={activeTab === tab.id ? 'h-full' : 'hidden'}>
+            <Workspace
+              projectId={tab.projectId}
+              onProjectChange={handleProjectChange}
+            />
+          </div>
+        ))}
       </div>
       <Toast />
     </div>
