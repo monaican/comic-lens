@@ -78,6 +78,9 @@ const api = {
       channels.forEach(ch => ipcRenderer.removeAllListeners(ch))
     }
   },
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:version')
+  },
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),
     maximize: () => ipcRenderer.send('window:maximize'),

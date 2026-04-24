@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Info } from 'lucide-react'
 
 interface Props {
@@ -6,6 +7,12 @@ interface Props {
 }
 
 export default function AboutModal({ open, onClose }: Props) {
+  const [version, setVersion] = useState('')
+
+  useEffect(() => {
+    if (open) window.api.app.getVersion().then(setVersion)
+  }, [open])
+
   return (
     <dialog className={`modal ${open ? 'modal-open' : ''}`}>
       <div className="modal-box max-w-md text-center">
@@ -14,7 +21,7 @@ export default function AboutModal({ open, onClose }: Props) {
             <Info className="w-7 h-7 text-primary-content" />
           </div>
           <h2 className="text-xl font-bold">ComicLens</h2>
-          <span className="badge badge-outline text-xs">v1.0.0</span>
+          <span className="badge badge-outline text-xs">v{version}</span>
           <p className="text-sm text-base-content/60 max-w-xs">
             AI 驱动的漫画翻译工具。通过视觉识别、智能翻译和图片生成，一键完成漫画本地化。
           </p>

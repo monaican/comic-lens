@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
+import { ipcMain, dialog, BrowserWindow, shell, app } from 'electron'
 import {
   createProject, getProject, listProjects, updateProject, deleteProject,
   createPage, getPage, listPages, updatePage
@@ -123,6 +123,7 @@ export function registerIpcHandlers(): void {
   })
 
   // Window controls
+  ipcMain.handle('app:version', () => app.getVersion())
   ipcMain.on('window:minimize', (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize()
   })
