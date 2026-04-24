@@ -2,3 +2,12 @@
 @plugin "daisyui" {
   themes: light --default, dark;
 }
+
+[data-theme="light"] {
+  --color-primary: oklch(0.65 0.15 240);
+  --color-primary-content: oklch(0.98 0.01 240);
+  --color-secondary: oklch(0.55 0.12 260);
+  --color-secondary-content: oklch(0.98 0.01 260);
+  --color-accent: oklch(0.60 0.14 220);
+  --color-accent-content: oklch(0.98 0.01 220);
+}
