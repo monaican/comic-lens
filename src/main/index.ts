@@ -1,6 +1,8 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
+import { initDatabase, closeDatabase } from './database'
+import { registerIpcHandlers } from './ipc'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -35,9 +37,12 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  initDatabase()
+  registerIpcHandlers()
   createWindow()
 })
 
 app.on('window-all-closed', () => {
+  closeDatabase()
   app.quit()
 })
