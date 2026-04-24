@@ -1,8 +1,7 @@
-__pycache__/
-*.pyc
-*.pyo
-
-.pytest_cache/
+node_modules/
+out/
+dist/
+build/
 
 data/comics.db
 data/comics.db-shm
@@ -12,7 +11,4 @@ data/logs/
 
 output/
 
-.venv/
-*.egg-info/
-dist/
-build/
+*.tsbuildinfo
