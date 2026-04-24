@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Info, Github, RefreshCw } from 'lucide-react'
+import { Info, ExternalLink, RefreshCw } from 'lucide-react'
 
 const REPO_URL = 'https://github.com/monaican/comic-lens'
 
@@ -49,7 +49,7 @@ export default function AboutModal({ open, onClose }: Props) {
 
         <div className="flex justify-center gap-2 pb-3">
           <button className="btn btn-sm btn-outline gap-1" onClick={() => window.api.app.openExternal(REPO_URL)}>
-            <Github className="w-3.5 h-3.5" /> GitHub
+            <ExternalLink className="w-3.5 h-3.5" /> GitHub
           </button>
           <button
             className="btn btn-sm btn-outline gap-1"
