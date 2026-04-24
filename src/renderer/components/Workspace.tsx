@@ -9,6 +9,7 @@ import ImageViewer from './ImageViewer'
 import DetailPanel from './DetailPanel'
 import LogModal from './LogModal'
 import type { Project, TranslateMode } from '../types'
+import { buildTranslationAlert, resolvePhaseCompletion } from '../workspace-utils'
 
 interface Props {
   projectId: string
@@ -59,6 +60,12 @@ export default function Workspace({ projectId, onProjectChange }: Props) {
   }, [projectId, refreshProject])
 
   const selectedPage = pages.find(p => p.id === selectedPageId) || null
+  const failedCount = pages.filter(page => page.status === 'failed').length
+  const phaseCompleted = resolvePhaseCompletion(translation.phaseCompleted, project)
+  const workspaceAlert = buildTranslationAlert({
+    pipelineError: translation.pipelineError,
+    failedCount
+  })
 
   if (!project) return <div className="flex items-center justify-center h-full">加载中...</div>
 
@@ -74,6 +81,7 @@ export default function Workspace({ projectId, onProjectChange }: Props) {
         phaseProgress={translation.phaseProgress}
         isRunning={translation.isRunning}
         completedCount={pages.filter(p => p.status === 'completed').length}
+        failedCount={failedCount}
         totalCount={pages.length}
         elapsedMs={translation.elapsedMs}
         onStart={translation.start}
@@ -82,7 +90,12 @@ export default function Workspace({ projectId, onProjectChange }: Props) {
         logCount={translation.logs.length}
         onShowLog={() => setShowLog(true)}
       />
-      <PhaseConfirmBar phaseCompleted={translation.phaseCompleted} onConfirm={translation.confirmPhase} />
+      <PhaseConfirmBar phaseCompleted={phaseCompleted} onConfirm={translation.confirmPhase} />
+      {workspaceAlert && (
+        <div className={`alert rounded-none ${workspaceAlert.tone === 'error' ? 'alert-error' : 'alert-warning'}`}>
+          <span>{workspaceAlert.message}</span>
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         {!leftCollapsed && (

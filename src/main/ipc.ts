@@ -9,6 +9,7 @@ import { startTranslation, stopTranslation, confirmPhase, retryFailed, regenerat
 import { generateThumbnail, getThumbnail, generateAllThumbnails, deleteProjectThumbnails } from './thumbnail-service'
 import { basename, join } from 'path'
 import { buildProjectOutputDir, validateImageFilename } from './safety-utils'
+import { assertImportableImages } from './import-utils'
 
 export function registerIpcHandlers(): void {
   // Projects
@@ -20,11 +21,11 @@ export function registerIpcHandlers(): void {
   }) => {
     const config = loadConfig()
     const outputDir = buildProjectOutputDir(config.output_base_dir, data.name)
+    const images = assertImportableImages(scanImages(data.sourceDir))
     const pid = createProject(
       data.name, data.sourceDir, outputDir,
       data.sourceLang, data.targetLang, data.translateMode
     )
-    const images = scanImages(data.sourceDir)
     const filenames: string[] = []
     images.forEach((imgPath, i) => {
       const fn = basename(imgPath)

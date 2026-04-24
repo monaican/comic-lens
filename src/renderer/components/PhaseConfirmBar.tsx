@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function PhaseConfirmBar({ phaseCompleted, onConfirm }: Props) {
-  if (!phaseCompleted) return null
+  if (!phaseCompleted?.paused) return null
 
   return (
     <div className="alert alert-info rounded-none animate-pulse">

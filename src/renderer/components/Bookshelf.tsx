@@ -6,9 +6,12 @@ import ComicCard from './ComicCard'
 import ImportModal from './ImportModal'
 import type { Project } from '../types'
 
-interface Props { onOpenProject: (project: Project) => void }
+interface Props {
+  onOpenProject: (project: Project) => void
+  onProjectDeleted?: (projectId: string) => void
+}
 
-export default function Bookshelf({ onOpenProject }: Props) {
+export default function Bookshelf({ onOpenProject, onProjectDeleted }: Props) {
   const { projects, createProject, deleteProject } = useProjects()
   const { config } = useConfig()
   const [showImport, setShowImport] = useState(false)
@@ -26,7 +29,9 @@ export default function Bookshelf({ onOpenProject }: Props) {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    await deleteProject(deleteTarget.id)
+    const projectId = deleteTarget.id
+    await deleteProject(projectId)
+    onProjectDeleted?.(projectId)
     setDeleteTarget(null)
   }
 

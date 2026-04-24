@@ -6,7 +6,14 @@ interface Props {
   defaultTargetLang: string
   defaultOutputBaseDir: string
   onClose: () => void
-  onImport: (data: { name: string; sourceDir: string; outputDir: string; sourceLang: string; targetLang: string; translateMode: string }) => void
+  onImport: (data: {
+    name: string
+    sourceDir: string
+    outputDir: string
+    sourceLang: string
+    targetLang: string
+    translateMode: string
+  }) => Promise<void>
 }
 
 export default function ImportModal({
@@ -21,38 +28,59 @@ export default function ImportModal({
   const [sourceLang, setSourceLang] = useState(defaultSourceLang)
   const [targetLang, setTargetLang] = useState(defaultTargetLang)
   const [translateMode, setTranslateMode] = useState('auto')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!open) return
+    setSourceDir('')
     setSourceLang(defaultSourceLang)
     setTargetLang(defaultTargetLang)
     setTranslateMode('auto')
+    setError('')
   }, [defaultSourceLang, defaultTargetLang, open])
 
   const handleSelectFolder = async () => {
     const path = await window.api.file.selectFolder()
-    if (path) setSourceDir(path)
+    if (path) {
+      setSourceDir(path)
+      setError('')
+    }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!sourceDir) return
     const name = sourceDir.split(/[/\\]/).pop() || 'untitled'
-    onImport({
-      name,
-      sourceDir,
-      outputDir: `${defaultOutputBaseDir}/${name}`,
-      sourceLang,
-      targetLang,
-      translateMode
-    })
-    setSourceDir('')
-    onClose()
+    setSubmitting(true)
+    setError('')
+    try {
+      await onImport({
+        name,
+        sourceDir,
+        outputDir: `${defaultOutputBaseDir}/${name}`,
+        sourceLang,
+        targetLang,
+        translateMode
+      })
+      setSourceDir('')
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <dialog className={`modal ${open ? 'modal-open' : ''}`}>
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-4">导入漫画</h3>
+
+        {error && (
+          <div className="alert alert-error mb-3 text-sm py-2">
+            <span>{error}</span>
+          </div>
+        )}
 
         <div className="form-control mb-3">
           <label className="label"><span className="label-text">漫画文件夹</span></label>
@@ -88,8 +116,10 @@ export default function ImportModal({
         </div>
 
         <div className="modal-action">
-          <button className="btn btn-ghost" onClick={onClose}>取消</button>
-          <button className="btn btn-primary" disabled={!sourceDir} onClick={handleSubmit}>导入</button>
+          <button className="btn btn-ghost" onClick={onClose} disabled={submitting}>取消</button>
+          <button className="btn btn-primary" disabled={!sourceDir || submitting} onClick={handleSubmit}>
+            {submitting ? <span className="loading loading-spinner loading-sm" /> : '导入'}
+          </button>
         </div>
       </div>
       <form method="dialog" className="modal-backdrop"><button onClick={onClose}>关闭</button></form>

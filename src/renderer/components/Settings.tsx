@@ -4,6 +4,7 @@ import { showToast } from './Toast'
 import { Eye, EyeOff, RotateCcw, Save, Info } from 'lucide-react'
 import AboutModal from './AboutModal'
 import type { AppConfig, ModelConfig } from '../types'
+import { getPromptEditorValue, PROMPT_FIELDS } from '../settings-utils'
 
 function ModelConfigCard({ label, value, onChange, providerOptions = [
   { value: 'openai', label: 'OpenAI' },
@@ -86,6 +87,10 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
     showToast('设置已保存')
   }
 
+  const updatePromptField = (key: keyof Pick<AppConfig, 'vision_prompt' | 'global_analysis_prompt' | 'page_translate_prompt' | 'image_gen_prompt'>, value: string) => {
+    setDraft({ ...draft, [key]: value })
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto p-6">
@@ -152,26 +157,20 @@ export default function Settings({ theme, onThemeChange }: SettingsProps) {
           <div className="divider text-xs text-base-content/40 my-2">提示词</div>
 
           <div className="space-y-4">
-            {([
-              { key: 'vision_prompt' as const, label: '视觉提示词' },
-              { key: 'global_analysis_prompt' as const, label: '全局分析提示词' },
-              { key: 'page_translate_prompt' as const, label: '逐页翻译提示词' },
-              { key: 'image_gen_prompt' as const, label: '图片生成提示词' }
-            ]).map(({ key, label }) => (
+            {PROMPT_FIELDS.map(({ key, label, defaultPrompt }) => (
               <div key={key} className="card card-bordered bg-base-100 shadow-sm">
                 <div className="card-body p-4 gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{label}</span>
                     <button className="btn btn-outline btn-xs gap-1"
-                      onClick={() => setDraft({ ...draft, [key]: '' })}>
+                      onClick={() => updatePromptField(key, defaultPrompt)}>
                       <RotateCcw className="w-3 h-3" />重置默认
                     </button>
                   </div>
                   <textarea
                     className="textarea textarea-bordered text-xs font-mono min-h-24 resize-y w-full"
-                    value={draft[key]}
-                    onChange={e => setDraft({ ...draft, [key]: e.target.value })}
-                    placeholder="留空使用默认提示词"
+                    value={getPromptEditorValue(draft[key], defaultPrompt)}
+                    onChange={e => updatePromptField(key, e.target.value)}
                   />
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import { ScrollText } from 'lucide-react'
 import type { Phase, PhaseProgress, TranslateMode } from '../types'
+import { canRetryFailedPages } from '../workspace-utils'
 
 const phaseLabels: Record<Phase, string> = {
   vision: '识图',
@@ -20,6 +21,7 @@ interface Props {
   phaseProgress: PhaseProgress | null
   isRunning: boolean
   completedCount: number
+  failedCount: number
   totalCount: number
   elapsedMs: number
   onStart: () => void
@@ -38,9 +40,10 @@ function formatTime(ms: number): string {
 
 export default function WorkspaceToolbar({
   projectName, sourceLang, targetLang, translateMode, onModeChange,
-  currentPhase, phaseProgress, isRunning, completedCount, totalCount, elapsedMs,
+  currentPhase, phaseProgress, isRunning, completedCount, failedCount, totalCount, elapsedMs,
   onStart, onStop, onRetryFailed, logCount, onShowLog
 }: Props) {
+  const retryEnabled = canRetryFailedPages(isRunning, failedCount)
   const progressPct = phaseProgress && phaseProgress.total > 0
     ? Math.round((phaseProgress.completed / phaseProgress.total) * 100)
     : 0
@@ -103,7 +106,10 @@ export default function WorkspaceToolbar({
           ) : (
             <button className="btn btn-error btn-xs" onClick={onStop}>停止</button>
           )}
-          <button className="btn btn-warning btn-xs" onClick={onRetryFailed} disabled={isRunning}>重试失败</button>
+          <button className="btn btn-warning btn-xs gap-1" onClick={onRetryFailed} disabled={!retryEnabled}>
+            <span>重试失败</span>
+            {failedCount > 0 && <span className="text-xs text-base-content/60">{failedCount}</span>}
+          </button>
         </div>
       </div>
 
