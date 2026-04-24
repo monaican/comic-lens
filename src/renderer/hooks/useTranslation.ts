@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Phase, TranslateProgress, PhaseCompleted } from '../types'
+import type { Phase, TranslateProgress, PhaseCompleted, PhaseProgress } from '../types'
 
 interface TranslationState {
   isRunning: boolean
   currentPhase: Phase | null
   phaseCompleted: PhaseCompleted | null
+  phaseProgress: PhaseProgress | null
   pageStatuses: Map<string, { phase: Phase; status: string }>
   errors: Map<string, string>
   finished: boolean
@@ -17,6 +18,7 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     isRunning: false,
     currentPhase: null,
     phaseCompleted: null,
+    phaseProgress: null,
     pageStatuses: new Map(),
     errors: new Map(),
     finished: false,
@@ -69,8 +71,17 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
       onUpdate?.()
     }
 
-    const handlePhaseStarted = (data: { phase: Phase }) => {
-      setState(prev => ({ ...prev, currentPhase: data.phase, phaseCompleted: null }))
+    const handlePhaseStarted = (data: { phase: Phase; total: number }) => {
+      setState(prev => ({
+        ...prev,
+        currentPhase: data.phase,
+        phaseCompleted: null,
+        phaseProgress: { phase: data.phase, completed: 0, total: data.total }
+      }))
+    }
+
+    const handlePhaseProgress = (data: PhaseProgress) => {
+      setState(prev => ({ ...prev, phaseProgress: data }))
     }
 
     const handlePhaseCompleted = (data: PhaseCompleted) => {
@@ -94,6 +105,7 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     window.api.translate.onPageFinished(handleFinished)
     window.api.translate.onPageError(handleError)
     window.api.translate.onPhaseStarted(handlePhaseStarted)
+    window.api.translate.onPhaseProgress(handlePhaseProgress)
     window.api.translate.onPhaseCompleted(handlePhaseCompleted)
     window.api.translate.onAllFinished(handleAllFinished)
     window.api.translate.onPipelineError(handlePipelineError)
@@ -109,7 +121,8 @@ export function useTranslation(projectId: string | null, onUpdate?: () => void) 
     setState(prev => ({
       ...prev,
       isRunning: true, finished: false, pipelineError: null,
-      pageStatuses: new Map(), errors: new Map(), elapsedMs: 0
+      pageStatuses: new Map(), errors: new Map(), elapsedMs: 0,
+      phaseProgress: null
     }))
     startTimer()
     await window.api.translate.start(projectId)

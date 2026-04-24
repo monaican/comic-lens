@@ -13,6 +13,8 @@ export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('original')
   const [originalSrc, setOriginalSrc] = useState<string | null>(null)
   const [translatedSrc, setTranslatedSrc] = useState<string | null>(null)
+  const [originalLoaded, setOriginalLoaded] = useState(false)
+  const [translatedLoaded, setTranslatedLoaded] = useState(false)
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
@@ -22,6 +24,8 @@ export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
   useEffect(() => {
     setOriginalSrc(null)
     setTranslatedSrc(null)
+    setOriginalLoaded(false)
+    setTranslatedLoaded(false)
     setScale(1)
     setPosition({ x: 0, y: 0 })
     if (!page) return
@@ -72,12 +76,25 @@ export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
     transition: dragging ? 'none' : 'transform 0.1s'
   }
 
-  const renderImage = (src: string | null, alt: string) => (
-    <div className="flex-1 flex items-center justify-center overflow-hidden">
-      {src ? (
-        <img src={src} alt={alt} className="max-w-full max-h-full object-contain" style={imgStyle} draggable={false} />
-      ) : (
-        <span className="loading loading-spinner" />
+  const renderImage = (src: string | null, alt: string, loaded: boolean, onLoad: () => void) => (
+    <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-base-200">
+          <div className="flex flex-col items-center gap-2">
+            <span className="loading loading-spinner loading-md text-primary" />
+            <span className="text-xs text-base-content/40">加载中...</span>
+          </div>
+        </div>
+      )}
+      {src && (
+        <img
+          src={src}
+          alt={alt}
+          className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          style={imgStyle}
+          draggable={false}
+          onLoad={onLoad}
+        />
       )}
     </div>
   )
@@ -109,14 +126,14 @@ export default function ImageViewer({ page, sourceDir, outputDir }: Props) {
       >
         {viewMode === 'split' ? (
           <div className="flex h-full">
-            {renderImage(originalSrc, '原图')}
+            {renderImage(originalSrc, '原图', originalLoaded, () => setOriginalLoaded(true))}
             <div className="w-px bg-base-300" />
-            {renderImage(translatedSrc, '译图')}
+            {renderImage(translatedSrc, '译图', translatedLoaded, () => setTranslatedLoaded(true))}
           </div>
         ) : viewMode === 'translated' ? (
-          renderImage(translatedSrc, '译图')
+          renderImage(translatedSrc, '译图', translatedLoaded, () => setTranslatedLoaded(true))
         ) : (
-          renderImage(originalSrc, '原图')
+          renderImage(originalSrc, '原图', originalLoaded, () => setOriginalLoaded(true))
         )}
       </div>
     </div>

@@ -64,6 +64,12 @@ export interface TranslateProgress {
   status: string
 }
 
+export interface PhaseProgress {
+  phase: Phase
+  completed: number
+  total: number
+}
+
 export interface PhaseCompleted {
   phase: Phase
   nextPhase: Phase | null
@@ -94,6 +100,13 @@ declare global {
         getCover: (dir: string) => Promise<string | null>
         readImage: (path: string) => Promise<{ base64: string; mimeType: string }>
       }
+      thumbnail: {
+        get: (projectId: string, filename: string) => Promise<string | null>
+        generate: (projectId: string, sourceDir: string, filename: string) => Promise<string>
+        generateAll: (projectId: string, sourceDir: string, filenames: string[]) => Promise<void>
+        onProgress: (cb: (data: { projectId: string; completed: number; total: number; filename: string }) => void) => void
+        removeProgressListener: () => void
+      }
       translate: {
         start: (projectId: string) => Promise<void>
         stop: (projectId: string) => Promise<void>
@@ -106,6 +119,7 @@ declare global {
         onPhaseCompleted: (cb: (data: PhaseCompleted) => void) => void
         onAllFinished: (cb: (data: { projectId: string }) => void) => void
         onPipelineError: (cb: (data: { projectId: string; error: string }) => void) => void
+        onPhaseProgress: (cb: (data: PhaseProgress) => void) => void
         removeAllListeners: () => void
       }
       window: {

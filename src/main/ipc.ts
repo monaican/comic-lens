@@ -6,13 +6,14 @@ import {
 import { loadConfig, saveConfig, type AppConfig } from './config'
 import { scanImages, getCoverPath, readImageAsBase64 } from './file-service'
 import { startTranslation, stopTranslation, confirmPhase, retryFailed } from './translate-pipeline'
+import { generateThumbnail, getThumbnail, generateAllThumbnails } from './thumbnail-service'
 import { basename } from 'path'
 
 export function registerIpcHandlers(): void {
   // Projects
   ipcMain.handle('db:projects:list', () => listProjects())
   ipcMain.handle('db:projects:get', (_, id: string) => getProject(id))
-  ipcMain.handle('db:projects:create', (_, data: {
+  ipcMain.handle('db:projects:create', (event, data: {
     name: string; sourceDir: string; outputDir: string;
     sourceLang: string; targetLang: string; translateMode: string
   }) => {
@@ -21,9 +22,16 @@ export function registerIpcHandlers(): void {
       data.sourceLang, data.targetLang, data.translateMode
     )
     const images = scanImages(data.sourceDir)
+    const filenames: string[] = []
     images.forEach((imgPath, i) => {
-      createPage(pid, basename(imgPath), i)
+      const fn = basename(imgPath)
+      createPage(pid, fn, i)
+      filenames.push(fn)
     })
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win && filenames.length > 0) {
+      generateAllThumbnails(pid, data.sourceDir, filenames, win)
+    }
     return pid
   })
   ipcMain.handle('db:projects:update', (_, id: string, fields: Record<string, unknown>) => {
@@ -52,6 +60,18 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('file:scan-images', (_, dir: string) => scanImages(dir))
   ipcMain.handle('file:get-cover', (_, dir: string) => getCoverPath(dir))
   ipcMain.handle('file:read-image', (_, path: string) => readImageAsBase64(path))
+
+  // Thumbnails
+  ipcMain.handle('thumbnail:get', (_, projectId: string, filename: string) =>
+    getThumbnail(projectId, filename)
+  )
+  ipcMain.handle('thumbnail:generate', (_, projectId: string, sourceDir: string, filename: string) =>
+    generateThumbnail(projectId, sourceDir, filename)
+  )
+  ipcMain.handle('thumbnail:generate-all', (event, projectId: string, sourceDir: string, filenames: string[]) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return generateAllThumbnails(projectId, sourceDir, filenames, win)
+  })
 
   // Translation control
   ipcMain.handle('translate:start', (event, projectId: string) => {

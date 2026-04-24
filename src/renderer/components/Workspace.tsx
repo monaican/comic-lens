@@ -54,6 +54,7 @@ export default function Workspace({ projectId }: Props) {
         translateMode={project.translate_mode as TranslateMode}
         onModeChange={handleModeChange}
         currentPhase={translation.currentPhase}
+        phaseProgress={translation.phaseProgress}
         isRunning={translation.isRunning}
         completedCount={pages.filter(p => p.status === 'completed').length}
         totalCount={pages.length}
@@ -70,6 +71,7 @@ export default function Workspace({ projectId }: Props) {
             <ThumbnailList
               pages={pages}
               sourceDir={project.source_dir}
+              projectId={projectId}
               selectedId={selectedPageId}
               onSelect={setSelectedPageId}
               pageStatuses={translation.pageStatuses}

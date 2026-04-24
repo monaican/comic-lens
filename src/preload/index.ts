@@ -23,6 +23,17 @@ const api = {
     getCover: (dir: string) => ipcRenderer.invoke('file:get-cover', dir),
     readImage: (path: string) => ipcRenderer.invoke('file:read-image', path)
   },
+  thumbnail: {
+    get: (projectId: string, filename: string) => ipcRenderer.invoke('thumbnail:get', projectId, filename),
+    generate: (projectId: string, sourceDir: string, filename: string) => ipcRenderer.invoke('thumbnail:generate', projectId, sourceDir, filename),
+    generateAll: (projectId: string, sourceDir: string, filenames: string[]) => ipcRenderer.invoke('thumbnail:generate-all', projectId, sourceDir, filenames),
+    onProgress: (cb: (data: unknown) => void) => {
+      ipcRenderer.on('thumbnail:progress', (_, data) => cb(data))
+    },
+    removeProgressListener: () => {
+      ipcRenderer.removeAllListeners('thumbnail:progress')
+    }
+  },
   translate: {
     start: (projectId: string) => ipcRenderer.invoke('translate:start', projectId),
     stop: (projectId: string) => ipcRenderer.invoke('translate:stop', projectId),
@@ -49,11 +60,14 @@ const api = {
     onPipelineError: (cb: (data: unknown) => void) => {
       ipcRenderer.on('translate:pipeline-error', (_, data) => cb(data))
     },
+    onPhaseProgress: (cb: (data: unknown) => void) => {
+      ipcRenderer.on('translate:phase-progress', (_, data) => cb(data))
+    },
     removeAllListeners: () => {
       const channels = [
         'translate:page-progress', 'translate:page-finished', 'translate:page-error',
         'translate:phase-started', 'translate:phase-completed',
-        'translate:all-finished', 'translate:pipeline-error'
+        'translate:all-finished', 'translate:pipeline-error', 'translate:phase-progress'
       ]
       channels.forEach(ch => ipcRenderer.removeAllListeners(ch))
     }

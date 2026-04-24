@@ -10,31 +10,54 @@ const statusColors: Record<string, string> = {
   failed: 'bg-error'
 }
 
+const statusLabels: Record<string, string> = {
+  pending: '待处理',
+  analyzing: '处理中',
+  analyzed: '已分析',
+  translating: '翻译中',
+  completed: '已完成',
+  failed: '失败'
+}
+
 interface Props {
   pages: Page[]
   sourceDir: string
+  projectId: string
   selectedId: string | null
   onSelect: (id: string) => void
   pageStatuses: Map<string, { phase: Phase; status: string }>
 }
 
-interface ThumbCache {
-  [path: string]: string
-}
-
-export default function ThumbnailList({ pages, sourceDir, selectedId, onSelect, pageStatuses }: Props) {
-  const [thumbs, setThumbs] = useState<ThumbCache>({})
+export default function ThumbnailList({ pages, sourceDir, projectId, selectedId, onSelect, pageStatuses }: Props) {
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadingRef = useRef<Set<string>>(new Set())
 
   const loadThumb = useCallback(async (filename: string) => {
-    const path = `${sourceDir}/${filename}`.replace(/\\/g, '/')
-    if (thumbs[path]) return
+    if (thumbs[filename] || loadingRef.current.has(filename)) return
+    loadingRef.current.add(filename)
     try {
-      const { base64, mimeType } = await window.api.file.readImage(path)
-      setThumbs(prev => ({ ...prev, [path]: `data:${mimeType};base64,${base64}` }))
+      let src = await window.api.thumbnail.get(projectId, filename)
+      if (!src) {
+        src = await window.api.thumbnail.generate(projectId, sourceDir, filename)
+      }
+      if (src) {
+        setThumbs(prev => ({ ...prev, [filename]: src! }))
+      }
     } catch { /* ignore */ }
-  }, [sourceDir, thumbs])
+    loadingRef.current.delete(filename)
+  }, [projectId, sourceDir, thumbs])
+
+  useEffect(() => {
+    const onProgress = (data: { projectId: string; filename: string }) => {
+      if (data.projectId === projectId) {
+        loadThumb(data.filename)
+      }
+    }
+    window.api.thumbnail.onProgress(onProgress)
+    return () => { window.api.thumbnail.removeProgressListener() }
+  }, [projectId, loadThumb])
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -46,7 +69,7 @@ export default function ThumbnailList({ pages, sourceDir, selectedId, onSelect, 
           }
         })
       },
-      { root: containerRef.current, rootMargin: '100px' }
+      { root: containerRef.current, rootMargin: '200px' }
     )
     return () => observerRef.current?.disconnect()
   }, [loadThumb])
@@ -80,34 +103,47 @@ export default function ThumbnailList({ pages, sourceDir, selectedId, onSelect, 
       onKeyDown={handleKeyDown}
     >
       {pages.map((page, i) => {
-        const path = `${sourceDir}/${page.filename}`.replace(/\\/g, '/')
-        const src = thumbs[path]
+        const src = thumbs[page.filename]
         const liveStatus = pageStatuses.get(page.id)
-        const displayStatus = liveStatus ? 'analyzing' : page.status
-        const colorClass = statusColors[displayStatus] || statusColors.pending
+        const displayStatus = liveStatus ? liveStatus.status : statusLabels[page.status] || page.status
+        const colorKey = liveStatus
+          ? (liveStatus.phase === 'vision' || liveStatus.phase === 'analysis' ? 'analyzing' : 'translating')
+          : page.status
+        const colorClass = statusColors[colorKey] || statusColors.pending
+        const isActive = colorKey === 'analyzing' || colorKey === 'translating'
 
         return (
           <div
             key={page.id}
             data-filename={page.filename}
-            className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-base-200 ${
+            className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-base-200 transition-colors ${
               selectedId === page.id ? 'bg-primary/10 border-l-2 border-primary' : ''
             }`}
             onClick={() => onSelect(page.id)}
           >
-            <div className={`w-1 h-10 rounded-full ${colorClass} ${
-              displayStatus === 'analyzing' || displayStatus === 'translating' ? 'animate-pulse' : ''
-            }`} />
+            <div className={`w-1 h-10 rounded-full ${colorClass} ${isActive ? 'animate-pulse' : ''}`} />
             <div className="w-10 h-14 bg-base-200 rounded overflow-hidden flex-shrink-0">
               {src ? (
                 <img src={src} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-base-content/30">{i + 1}</div>
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="loading loading-spinner loading-xs text-base-content/30" />
+                </div>
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-xs truncate">{page.filename}</div>
-              <div className="text-xs text-base-content/40">#{i + 1}</div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-base-content/40">#{i + 1}</span>
+                {liveStatus && (
+                  <span className="text-xs text-primary truncate">{displayStatus}</span>
+                )}
+                {!liveStatus && page.status !== 'pending' && (
+                  <span className={`text-xs ${page.status === 'failed' ? 'text-error' : 'text-base-content/50'}`}>
+                    {statusLabels[page.status] || page.status}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )

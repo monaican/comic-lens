@@ -62,9 +62,10 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
     const needsVision = pages.filter(p => !p.vision_result)
     if (needsVision.length > 0) {
       updateProject(projectId, { status: 'analyzing', current_phase: 'vision' })
-      send(win, 'translate:phase-started', { phase: 'vision' })
+      send(win, 'translate:phase-started', { phase: 'vision', total: needsVision.length })
 
       const visionPrompt = getVisionPrompt(config).replace('{source_lang}', project.source_lang as string)
+      let visionDone = 0
 
       await Promise.allSettled(needsVision.map(page =>
         semaphore.run(async () => {
@@ -79,7 +80,9 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
               config.max_retries, pageId, win
             )
             updatePage(pageId, { vision_result: result, status: 'analyzed' })
+            visionDone++
             send(win, 'translate:page-finished', { pageId, phase: 'vision', result })
+            send(win, 'translate:phase-progress', { phase: 'vision', completed: visionDone, total: needsVision.length })
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err)
             updatePage(pageId, { status: 'failed', error_message: msg })
@@ -99,7 +102,7 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
     // Phase 2: Global Analysis
     if (!project.master_prompt) {
       updateProject(projectId, { status: 'analyzing', current_phase: 'analysis' })
-      send(win, 'translate:phase-started', { phase: 'analysis' })
+      send(win, 'translate:phase-started', { phase: 'analysis', total: 1 })
 
       const allPages = listPages(projectId)
       const visionResults: Record<string, string> = {}
@@ -116,6 +119,7 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
         config.max_retries, 'global', win
       )
       updateProject(projectId, { master_prompt: masterPrompt })
+      send(win, 'translate:phase-progress', { phase: 'analysis', completed: 1, total: 1 })
       send(win, 'translate:phase-completed', { phase: 'analysis', nextPhase: 'translation' })
 
       if (state.stopped) return
@@ -130,12 +134,14 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
     const needsTranslation = listPages(projectId).filter(p => p.vision_result && !p.refined_translation)
     if (needsTranslation.length > 0) {
       updateProject(projectId, { status: 'translating', current_phase: 'translation' })
-      send(win, 'translate:phase-started', { phase: 'translation' })
+      send(win, 'translate:phase-started', { phase: 'translation', total: needsTranslation.length })
 
       const pagePrompt = getPageTranslatePrompt(config)
         .replace('{master_prompt}', updatedProject.master_prompt as string)
         .replace('{source_lang}', updatedProject.source_lang as string)
         .replace(/{target_lang}/g, updatedProject.target_lang as string)
+
+      let translationDone = 0
 
       await Promise.allSettled(needsTranslation.map(page =>
         semaphore.run(async () => {
@@ -149,7 +155,9 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
               config.max_retries, pageId, win
             )
             updatePage(pageId, { refined_translation: result, status: 'analyzed' })
+            translationDone++
             send(win, 'translate:page-finished', { pageId, phase: 'translation', result })
+            send(win, 'translate:phase-progress', { phase: 'translation', completed: translationDone, total: needsTranslation.length })
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err)
             updatePage(pageId, { status: 'failed', error_message: msg })
@@ -171,12 +179,14 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
     const needsImageGen = listPages(projectId).filter(p => p.refined_translation && p.status !== 'completed')
     if (needsImageGen.length > 0) {
       updateProject(projectId, { status: 'translating', current_phase: 'image_gen' })
-      send(win, 'translate:phase-started', { phase: 'image_gen' })
+      send(win, 'translate:phase-started', { phase: 'image_gen', total: needsImageGen.length })
 
       const outputDir = join(
         config.output_base_dir,
         latestProject.name as string
       )
+
+      let imageGenDone = 0
 
       await Promise.allSettled(needsImageGen.map(page =>
         semaphore.run(async () => {
@@ -204,7 +214,9 @@ export async function startTranslation(projectId: string, win: BrowserWindow): P
               config.max_retries, pageId, win
             )
             updatePage(pageId, { status: 'completed' })
+            imageGenDone++
             send(win, 'translate:page-finished', { pageId, phase: 'image_gen', result: 'done' })
+            send(win, 'translate:phase-progress', { phase: 'image_gen', completed: imageGenDone, total: needsImageGen.length })
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err)
             updatePage(pageId, { status: 'failed', error_message: msg })
